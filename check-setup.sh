@@ -13,8 +13,8 @@ npm_missing="0"
 # set this to the number of the current lab
 cur_lab=6
 
-system=$(uname -a)
-if [ "$system" == "Linux precise32 3.2.0-23-generic-pae #36-Ubuntu SMP Tue Apr 10 22:19:09 UTC 2012 i686 i686 i386 GNU/Linux" ]
+system=$(uname -a | cut -d' ' -f1,2)
+if [ "$system" == "Linux precise32" ] || [ "$system" == "Linux vagrant-ubuntu-trusty-64" ]
 then
   sys_vagrant="1"  
   echo "Running on Vagrant guest"
@@ -23,9 +23,9 @@ then
   
   if [ "$user" != "root" ]
   then
-	echo "ERROR: You must run this script with sudo. Enter the following and hit enter."
-	echo "sudo bash lab6/check-setup.sh"
-	exit
+    echo "ERROR: You must run this script with sudo. Enter the following and hit enter."
+    echo "sudo bash lab6/check-setup.sh"
+    exit
   fi
   
 elif [ $short_system == "Darwin"  ]
@@ -52,83 +52,77 @@ then
     then
       echo "You don't have $i"
       all_present="0"
-	  if [ "$i" == "mongo" ]
-	  then
-		mongo_missing="1"
-	  elif [ "$i" == "heroku" ]
-	  then
-		heroku_missing="1"
-	  elif [ "$i" == "node" ]
-	  then
-		node_missing="1"
-	  elif [ "$i" == "npm" ]
-	  then
-		npm_missing="1"
-	  fi
+      if [ "$i" == "mongo" ]
+      then
+        mongo_missing="1"
+      elif [ "$i" == "heroku" ]
+      then
+        heroku_missing="1"
+      elif [ "$i" == "node" ]
+      then
+        node_missing="1"
+      elif [ "$i" == "npm" ]
+      then
+        npm_missing="1"
+      fi
     fi
   done
   
   if [ "$mongo_missing" == "1" ]
   then
-	echo "Installing MongoDB..."
-	mongo_res=$(
-	mkdir -p /data/db;
-	chown vagrant /data/db;
-	apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 7F0CEB10;
-	echo 'deb http://downloads-distro.mongodb.org/repo/ubuntu-upstart dist 10gen' | sudo tee /etc/apt/sources.list.d/mongodb.list;
-	apt-get update;
-	apt-get install -y mongodb-10gen;)
-	
-	mongo_loc=$(which mongo)
-	if [ "${#mongo_loc}" == "0" ]
-	then
-		echo "Auto install failed."
-	else
-		echo "Auto install succeeded"
-	fi
+    echo "Installing MongoDB..."
+    mongo_res=$(/home/vagrant/introHCI/mongo.sh)
+
+    mongo_loc=$(which mongo)
+    if [ "${#mongo_loc}" == "0" ]
+    then
+        echo "Auto install failed."
+    else
+        echo "Auto install succeeded"
+    fi
   else
-	echo "Ensuring mongo data directory is set up."
-  	mkdir -p /data/db;
-	chown vagrant /data/db;
+    echo "Ensuring mongo data directory is set up."
+      mkdir -p /data/db;
+    chown vagrant /data/db;
   fi
   
   if [ "$heroku_missing" == "1" ]
   then
-	heroku_res=$(echo "Installing Heroku Toolbelt...";
-	wget -qO- https://toolbelt.heroku.com/install-ubuntu.sh | sh)
-	heroku_loc=$(which heroku)
-	if [ "${#heroku_loc}" == "0" ]
-	then
-		echo "Auto install failed."
-	else
-		echo "Auto install succeeded"
-	fi
+    heroku_res=$(echo "Installing Heroku Toolbelt...";
+    /home/vagrant/introHCI/heroku.sh)
+    heroku_loc=$(which heroku)
+    if [ "${#heroku_loc}" == "0" ]
+    then
+        echo "Auto install failed."
+    else
+        echo "Auto install succeeded"
+    fi
   fi
   
   if [ "$node_missing" == "1" ]
   then
     echo "Installing nodejs"    
-	node_res=$(apt-get -y install nodejs)
-	node_loc=$(which node)
-	if [ "${#node_loc}" == "0" ]
-	then
-		echo "Auto install failed."
-	else
-		echo "Auto install succeeded"
-	fi
+    node_res=$(/home/vagrant/introHCI/nodejs.sh)
+    node_loc=$(which node)
+    if [ "${#node_loc}" == "0" ]
+    then
+        echo "Auto install failed."
+    else
+        echo "Auto install succeeded"
+    fi
   fi
   
   if [ "$npm_missing" == "1" ]
   then
     echo "Installing npm"  
-	npm_res=$(apt-get -y install npm)
-	npm_loc=$(which npm)
-	if [ "${#npm_loc}" == "0" ]
-	then
-		echo "Auto install failed."
-	else
-		echo "Auto install succeeded"
-	fi
+    npm_res=$(/home/vagrant/introHCI/nodejs.sh)
+    npm_loc=$(which npm)
+    if [ "${#npm_loc}" == "0" ]
+    then
+        echo "Auto install failed."
+    else
+        echo "Auto install succeeded"
+    fi
   fi
 
   # current lab hardcoded
@@ -138,9 +132,9 @@ then
   then
     echo "FAIL: Node is missing packages"
     echo "Attempting to repair."
-    install_status=$(cd lab4; npm -y install --no-bin-links)
+    install_status=$(cd lab6; npm -y install --no-bin-links)
 
-    node_status=$(cd lab4;npm ls 2>&1)
+    node_status=$(cd lab6;npm ls 2>&1)
   
     if [[ $node_status != *"UNMET DEPENDENCY"* ]]
     then
@@ -203,7 +197,7 @@ else
   then
     echo "PASS: You are using the correct Vagrantfile"
   else
-    echo "FAIL: CS147 Vagrantfile not found. Are you running this in the introHCI directory?"
+    echo "FAIL: CSE170 Vagrantfile not found. Are you running this in the introHCI directory?"
   fi
 
   missing_dirs="0"
